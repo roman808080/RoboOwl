@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+from gtts import gTTS
+from pydub import AudioSegment
+import re
+import sys
+
+def insert_silence(audio, duration):
+    silence = AudioSegment.silent(duration=duration * 1000)  # Convert duration to milliseconds
+    return audio + silence
+
+def process_text(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        text = file.read()
+
+    segments = re.split(r'<silence>(\d+)</silence>', text)
+    combined_audio = AudioSegment.empty()
+
+    for i in range(0, len(segments), 2):
+        text_segment = segments[i].strip()
+        if text_segment:  # Check if the text segment is not empty
+            tts = gTTS(text_segment, lang='cs')
+            with open("temp.mp3", "wb") as f:
+                tts.write_to_fp(f)
+            
+            speech_segment = AudioSegment.from_mp3("temp.mp3")
+            combined_audio += speech_segment
+
+        if i + 1 < len(segments):
+            silence_duration = int(segments[i + 1])
+            combined_audio = insert_silence(combined_audio, silence_duration)
+
+    return combined_audio
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <input_text_file> <output_audio_file>")
+        sys.exit(1)
+
+    input_file_path = sys.argv[1]
+    output_audio_file_path = sys.argv[2]
+
+    output_audio = process_text(input_file_path)
+    output_audio.export(output_audio_file_path, format="mp3")
+    print(f"Audio lesson created successfully and saved to {output_audio_file_path}")

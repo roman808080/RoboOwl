@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+from gtts import gTTS
+import sys
+
+def text_to_speech(input_file, output_file):
+    # Read the text from the file
+    with open(input_file, 'r', encoding='utf-8') as file:
+        text = file.read()
+
+    # Convert text to speech
+    tts = gTTS(text, lang='cs')  # 'cs' is the language code for Czech
+
+    # Save the speech to an audio file
+    tts.save(output_file)
+    print(f"Audio file saved to {output_file}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <input_text_file> <output_audio_file>")
+        sys.exit(1)
+
+    input_file_path = sys.argv[1]
+    output_audio_file_path = sys.argv[2]
+
+    text_to_speech(input_file_path, output_audio_file_path)
+
