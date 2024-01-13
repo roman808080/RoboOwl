@@ -44,33 +44,44 @@ def process_line(term, example, translation):
 
     return audio
 
-# Main script
-first_15_words = []
-with open('your_file.csv', 'r', encoding='utf-8') as file:
-    reader = csv.reader(file)
-    next(reader)  # Skip header
-
+def main():
+    number = 1
+    current_words = []
     combined_audio = AudioSegment.empty()
-    for i, row in enumerate(reader):
-        if i >= 15:  # Process only first 15 lines
-            break
-        term, example, _, translation, _, _ = row
-        first_15_words.append(term)
-        combined_audio += process_line(term, example, translation)
 
-# Create a description from the first 15 words
-description = ', '.join(first_15_words)
+    with open('your_file.csv', 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip header
 
-# Save final audio
-output_file = "final_audio.mp3"
-combined_audio.export(output_file, format="mp3")
+        for i, row in enumerate(reader):
 
-# Add ID3 tags
-audio_file = MP3(output_file)
-audio_file.tags = ID3()
-audio_file.tags.add(TIT2(encoding=3, text=description))  # Using the description as title
-audio_file.tags.add(TPE1(encoding=3, text="Robo Owl"))
-audio_file.tags.add(TALB(encoding=3, text="Czech"))
-audio_file.tags.add(COMM(encoding=3, desc="Description", text=description))  # Adding description
-audio_file.save()
+            term, example, _, translation, _, _ = row
 
+            current_words.append(term)
+            combined_audio += process_line(term, example, translation)
+
+            if (i + 1) % 5 == 0:
+                # Create a description from the first 15 words
+                description = ', '.join(current_words)
+
+                # Save final audio
+                output_file = f"czech{number}.mp3"
+                combined_audio.export(output_file, format="mp3")
+
+                # Add ID3 tags
+                audio_file = MP3(output_file)
+                audio_file.tags = ID3()
+                audio_file.tags.add(TIT2(encoding=3, text=description))  # Using the description as title
+                audio_file.tags.add(TPE1(encoding=3, text="Robo Owl"))
+                audio_file.tags.add(TALB(encoding=3, text="Czech"))
+                audio_file.tags.add(COMM(encoding=3, desc="Description", text=description))  # Adding description
+                audio_file.save()
+
+                number += 1
+                current_words = []
+                combined_audio = AudioSegment.empty()
+
+
+# Main script
+if __name__ == "__main__":
+    main()
