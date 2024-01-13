@@ -4,7 +4,8 @@ import csv
 import io
 from gtts import gTTS
 from pydub import AudioSegment
-from pydub.playback import play
+from mutagen.id3 import ID3, TIT2, TPE1, TALB, COMM
+from mutagen.mp3 import MP3
 
 # Function to add pause
 def add_pause(audio, pause_duration=500):
@@ -44,6 +45,7 @@ def process_line(term, example, translation):
     return audio
 
 # Main script
+first_15_words = []
 with open('your_file.csv', 'r', encoding='utf-8') as file:
     reader = csv.reader(file)
     next(reader)  # Skip header
@@ -53,8 +55,22 @@ with open('your_file.csv', 'r', encoding='utf-8') as file:
         if i >= 15:  # Process only first 15 lines
             break
         term, example, _, translation, _, _ = row
+        first_15_words.append(term)
         combined_audio += process_line(term, example, translation)
 
+# Create a description from the first 15 words
+description = ', '.join(first_15_words)
+
 # Save final audio
-combined_audio.export("final_audio.mp3", format="mp3")
+output_file = "final_audio.mp3"
+combined_audio.export(output_file, format="mp3")
+
+# Add ID3 tags
+audio_file = MP3(output_file)
+audio_file.tags = ID3()
+audio_file.tags.add(TIT2(encoding=3, text=description))  # Using the description as title
+audio_file.tags.add(TPE1(encoding=3, text="Robo Owl"))
+audio_file.tags.add(TALB(encoding=3, text="Czech"))
+audio_file.tags.add(COMM(encoding=3, desc="Description", text=description))  # Adding description
+audio_file.save()
 
